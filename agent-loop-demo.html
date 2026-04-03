@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Main Agent Loop Demo</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --border-color: #333;
+            --step-bg: #2d2d2d;
+            --active-step-bg: #3b82f633;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            padding: 1rem 2rem;
+            background: #111;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar: Steps */
+        .steps-sidebar {
+            width: 320px;
+            background: #1a1a1a;
+            border-right: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            overflow-y: auto;
+        }
+
+        .step-card {
+            background: var(--step-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .step-card.active {
+            border-color: var(--accent-color);
+            background: var(--active-step-bg);
+        }
+
+        .step-num {
+            font-size: 0.75rem;
+            color: #888;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-name {
+            font-weight: 500;
+            font-size: 0.85rem;
+        }
+
+        /* Center: Visualization */
+        .visualization {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .loop-diagram {
+            position: relative;
+            width: 450px;
+            height: 450px;
+        }
+
+        .node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #2d2d2d;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+
+        .node.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
+            transform: scale(1.2);
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* Console */
+        .console-area {
+            width: 400px;
+            background: #000;
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .console-header {
+            padding: 0.5rem 1rem;
+            background: #1a1a1a;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #888;
+        }
+
+        #console-log {
+            flex: 1;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.85rem;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .log-entry { margin-bottom: 0.5rem; }
+        .log-info { color: #888; }
+        .log-system { color: var(--accent-color); }
+        .log-model { color: #fff; }
+        .log-tool { color: var(--warning-color); }
+        .log-success { color: var(--success-color); }
+
+        /* Controls */
+        .controls {
+            padding: 1rem 2rem;
+            background: #1a1a1a;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.secondary {
+            background: #333;
+        }
+
+        .status-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="title">Claude Code Main Agent Loop (13 Steps)</div>
+        <div class="token-usage">Total Context Tokens: <span id="token-count">0</span> / 200,000</div>
+    </header>
+
+    <div class="main-container">
+        <div class="steps-sidebar" id="steps-list">
+            <!-- Steps will be injected here -->
+        </div>
+
+        <div class="visualization" id="viz-area">
+            <div id="status-display" class="status-pill">Idle</div>
+            
+            <div id="display-content" style="width: 100%; max-width: 600px;">
+                <div style="text-align: center; color: #888; margin-top: 50px;">
+                    Click "Start Request" to simulate a user prompt.
+                </div>
+            </div>
+
+            <div class="loop-diagram" id="loop-diagram">
+                <!-- Nodes created by JS -->
+            </div>
+        </div>
+
+        <div class="console-area">
+            <div class="console-header">SYSTEM TRACE</div>
+            <div id="console-log"></div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-start">Start Request</button>
+        <button id="btn-next" disabled class="secondary">Next Step</button>
+        <button id="btn-reset" class="secondary">Reset</button>
+        <div style="flex: 1"></div>
+        <div id="loop-count" style="font-size: 0.9rem; color: #888;">Request: 0 | Agent Turn: 0</div>
+    </div>
+
+    <script>
+        const steps = [
+            { id: 1, name: "Prompt Processing", desc: "Intercepting input and executing /slash commands." },
+            { id: 2, name: "Context Assembly", desc: "Loading CLAUDE.md, memory, and MCP servers." },
+            { id: 3, name: "Transcript Recording", desc: "Saving the conversation state to disk (for --resume)." },
+            { id: 4, name: "Background Prefetching", desc: "Async searching for skills and user memories." },
+            { id: 5, name: "Tool Result Budgeting", desc: "Truncating massive file outputs from previous turns." },
+            { id: 6, name: "Context Compaction", desc: "Running Snip, Microcompact, and Autocompact." },
+            { id: 7, name: "Token Blocking Check", desc: "Verifying prompt size against hard 200k limit." },
+            { id: 8, name: "Model Query & Stream", desc: "Sending context to Anthropic API and streaming response." },
+            { id: 9, name: "Error Recovery", desc: "Catching API limits and triggering Reactive Compact if needed." },
+            { id: 10, name: "Post-Sampling Hooks", desc: "Evaluating response structure and stopping rules." },
+            { id: 11, name: "Tool Orchestration", desc: "Executing requested tools (bash, replace, etc.)." },
+            { id: 12, name: "Context Injection", desc: "Adding prefetch results into history as attachments." },
+            { id: 13, name: "Loop Continuation", desc: "Looping back to Step 4 if tools ran, else ending." }
+        ];
+
+        let currentStep = 0;
+        let requestNum = 1;
+        let turn = 1;
+        let totalTokens = 3500;
+
+        const stepsList = document.getElementById('steps-list');
+        const consoleLog = document.getElementById('console-log');
+        const tokenDisplay = document.getElementById('token-count');
+        const loopDisplay = document.getElementById('loop-count');
+        const btnNext = document.getElementById('btn-next');
+        const btnStart = document.getElementById('btn-start');
+        const btnReset = document.getElementById('btn-reset');
+        const displayContent = document.getElementById('display-content');
+        const statusDisplay = document.getElementById('status-display');
+
+        function initSteps() {
+            stepsList.innerHTML = '';
+            steps.forEach(step => {
+                const div = document.createElement('div');
+                div.className = 'step-card';
+                div.id = `step-${step.id}`;
+                div.innerHTML = `
+                    <div class="step-num">STEP ${step.id}</div>
+                    <div class="step-name">${step.name}</div>
+                    <div style="font-size: 0.75rem; color: #888; margin-top: 0.25rem;">${step.desc}</div>
+                `;
+                stepsList.appendChild(div);
+            });
+        }
+
+        function log(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `log-entry log-${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleLog.appendChild(div);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        function updateUI() {
+            document.querySelectorAll('.step-card').forEach(card => card.classList.remove('active'));
+            if (currentStep > 0) {
+                const activeCard = document.getElementById(`step-${currentStep}`);
+                activeCard.classList.add('active');
+                activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                statusDisplay.textContent = steps[currentStep-1].name;
+            } else {
+                statusDisplay.textContent = "Idle";
+            }
+            
+            tokenDisplay.textContent = totalTokens.toLocaleString();
+            loopDisplay.textContent = `Request: ${requestNum} | Agent Turn: ${turn}`;
+            
+            // Highlight node in circle
+            document.querySelectorAll('.node').forEach(node => node.classList.remove('active'));
+            if (currentStep > 0) {
+                const node = document.getElementById(`node-${currentStep}`);
+                if (node) node.classList.add('active');
+            }
+        }
+
+        function renderStepContent(stepId) {
+            const step = steps[stepId - 1];
+            let html = `<h3>${step.name}</h3>`;
+
+            switch(stepId) {
+                case 1:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Input:</strong> "Find the bug in query.ts"<br>
+                        <strong>Function:</strong> processUserInput()<br>
+                        <span style="color: var(--success-color);">No slash command detected. Proceeding as standard prompt.</span>
+                    </div>`;
+                    break;
+                case 2:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-size: 0.85rem;">
+                        <strong>Function:</strong> fetchSystemPromptParts()<br>
+                        <ul style="padding-left: 1.5rem; margin-bottom: 0;">
+                            <li>Loading Default System Prompt</li>
+                            <li>Loading CLAUDE.md instructions</li>
+                            <li>Loading MCP Client definitions</li>
+                        </ul>
+                    </div>`;
+                    break;
+                case 3:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>State:</strong> <span style="color: var(--success-color);">Saved</span><br>
+                        <strong>Function:</strong> recordTranscript()<br>
+                        <span style="color: #888;">Session persisted to disk. Available for 'claude --resume'.</span>
+                    </div>`;
+                    break;
+                case 4:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <span style="color: #888;">[Async]</span> startRelevantMemoryPrefetch()<br>
+                        <span style="color: #888;">[Async]</span> startSkillDiscoveryPrefetch()<br>
+                        <span style="color: var(--success-color);">Background threads launched. Loop continues immediately.</span>
+                    </div>`;
+                    break;
+                case 5:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Function:</strong> applyToolResultBudget()<br>
+                        <span style="color: var(--success-color);">No previously oversized outputs to truncate.</span>
+                    </div>`;
+                    break;
+                case 6:
+                    html += `<div style="background: #111; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; border: 1px solid #444;">
+                        1. snipCompactIfNeeded() -> <span style="color: #888;">No-op</span><br>
+                        2. deps.microcompact() -> <span style="color: #888;">No-op</span><br>
+                        3. deps.autocompact() -> <span style="color: var(--success-color);">Threshold not met.</span><br>
+                        <strong>Tokens:</strong> ${totalTokens} / 200,000
+                    </div>`;
+                    break;
+                case 7:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Function:</strong> calculateTokenWarningState()<br>
+                        <strong>Hard Limit:</strong> 200,000 tokens<br>
+                        <span style="color: var(--success-color);">Status: Under limit.</span>
+                    </div>`;
+                    break;
+                case 8:
+                    html += `<div class="thinking" style="text-align: center; margin-top: 1rem;">
+                            <div style="font-size: 2rem;">🧠</div>
+                            <div>Streaming context to Claude API...</div>
+                        </div>
+                        <div style="background: #111; padding: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 0.75rem; margin-top: 1rem; color: #888;">
+                            &lt;stream_request_start&gt;<br>
+                            model: claude-3-7-sonnet-20250219
+                        </div>
+                        <div style="background: #111; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; border: 1px solid var(--accent-color); margin-top: 0.5rem;">
+                            I'll search the codebase to find the issue in query.ts.<br>
+                            <span style="color: var(--warning-color);">&lt;tool_use name="grep_search"&gt;</span><br>
+                            &nbsp;&nbsp;pattern: "TODO|FIXME|error"<br>
+                            &nbsp;&nbsp;include_pattern: "query.ts"<br>
+                            <span style="color: var(--warning-color);">&lt;/tool_use&gt;</span>
+                        </div>`;
+                    break;
+                case 9:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Function:</strong> tryReactiveCompact()<br>
+                        <span style="color: var(--success-color);">No 'max_output_tokens' or 'prompt_too_long' errors detected. Proceeding.</span>
+                    </div>`;
+                    break;
+                case 10:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Function:</strong> executePostSamplingHooks()<br>
+                        <span style="color: var(--success-color);">Output structure verified successfully. No blocking conditions.</span>
+                    </div>`;
+                    break;
+                case 11:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-size: 0.85rem;">
+                        <strong>Executing:</strong> grep_search<br>
+                        <strong>Status:</strong> <span style="color: var(--success-color);">Success</span><br>
+                        <strong>Output Size:</strong> 854 chars<br>
+                        <span style="color: #888; font-size: 0.8rem;">(Runs the 10-step Tool Pipeline internally)</span>
+                    </div>`;
+                    break;
+                case 12:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        <strong>Function:</strong> getAttachmentMessages()<br>
+                        <span style="color: var(--success-color);">Awaiting and injecting completed background prefetches into history.</span>
+                    </div>`;
+                    break;
+                case 13:
+                    html += `<div style="background: #111; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.8rem; border: 1px solid #444;">
+                        <strong>needsFollowUp:</strong> true (tools were used)<br>
+                        <strong>Action:</strong> <span style="color: var(--accent-color); font-weight: bold;">Looping back to Step 4</span><br>
+                        <span style="color: #888;">Turn count incremented.</span>
+                    </div>`;
+                    break;
+                default:
+                    html += `<div style="background: #252525; padding: 1rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                        Processing step...
+                    </div>`;
+            }
+
+            displayContent.innerHTML = html;
+        }
+
+        btnStart.onclick = () => {
+            turn = 1;
+            currentStep = 1;
+            btnStart.disabled = true;
+            btnNext.disabled = false;
+            log(`[New Prompt] Agent Loop Started`, 'system');
+            updateUI();
+            renderStepContent(currentStep);
+        };
+
+        btnNext.onclick = () => {
+            if (currentStep < 13) {
+                currentStep++;
+            } else {
+                // Loop behavior
+                if (turn < 2) {
+                    turn++;
+                    currentStep = 4; // Loop back to prefetching/compaction
+                    totalTokens += 1500;
+                    log(`[Recursion] Back to Context phase for Turn ${turn}`, 'system');
+                } else {
+                    log(`[Stop] Goal achieved. Yielding to user.`, 'success');
+                    btnStart.disabled = false;
+                    btnNext.disabled = true;
+                    currentStep = 0;
+                    requestNum++;
+                }
+            }
+            updateUI();
+            if (currentStep > 0) renderStepContent(currentStep);
+            
+            switch(currentStep) {
+                case 1: log("Parsed user prompt."); break;
+                case 2: log("Assembled system context (CLAUDE.md, MCP)."); break;
+                case 3: log("Flushed transcript to disk."); break;
+                case 4: log("Started async memory and skill prefetches."); break;
+                case 5: log("Checked Tool Result Budget (no large outputs to truncate)."); break;
+                case 6: log("Ran compaction pipeline (Snip, Microcompact, Autocompact)."); break;
+                case 7: log("Verified token limits (Hard Block Check)."); break;
+                case 8: log("Streaming API response from Anthropic...", "model"); break;
+                case 9: log("No API rejection. Error Recovery skipped."); break;
+                case 10: log("Ran Post-Sampling Hooks (safe response)."); break;
+                case 11: log("Orchestrated tools: grep_search executed.", "tool"); break;
+                case 12: log("Injected async prefetch results as attachments."); break;
+                case 13: log("Evaluating loop continuation criteria."); break;
+            }
+        };
+
+        btnReset.onclick = () => {
+            requestNum = 1;
+            turn = 1;
+            currentStep = 0;
+            totalTokens = 3500;
+            consoleLog.innerHTML = '';
+            btnStart.disabled = false;
+            btnNext.disabled = true;
+            displayContent.innerHTML = '<div style="text-align: center; color: #888; margin-top: 50px;">Click "Start Request" to begin.</div>';
+            updateUI();
+            log("System reset.", "info");
+        };
+
+        // Initialize circular diagram
+        const diagram = document.getElementById('loop-diagram');
+        const radius = 180;
+        const centerX = 225;
+        const centerY = 225;
+
+        function createDiagram() {
+            diagram.innerHTML = '';
+            steps.forEach((step, i) => {
+                const angle = (i / steps.length) * 2 * Math.PI - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle) - 20;
+                const y = centerY + radius * Math.sin(angle) - 20;
+
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.id = `node-${step.id}`;
+                node.style.left = `${x}px`;
+                node.style.top = `${y}px`;
+                node.textContent = step.id;
+                node.title = step.name;
+                diagram.appendChild(node);
+            });
+        }
+
+        initSteps();
+        createDiagram();
+    </script>
+</body>
+</html>

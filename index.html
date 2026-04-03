@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Main Agent Loop Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <h1>REAL OPEN CODE</h1>
+            <nav class="top-nav">
+                <a href="#" class="nav-link active" data-target="view-loop">Agent Loop</a>
+                <a href="#" class="nav-link" data-target="view-tools">Tools & Commands</a>
+            </nav>
+        </div>
+        <div class="metrics">Tokens: <span id="token-count">0</span> / 200,000 | Turn: <span id="turn-count">0</span></div>
+    </div>
+    
+    <div class="container" id="view-loop">
+        <div class="diagram-section">
+            <div id="loop-diagram"></div>
+            <div class="controls">
+                <button id="btn-main">INITIALIZE</button>
+                <button id="btn-reset" class="secondary">RESET</button>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <div class="step-focus" id="step-focus">
+                <h2 id="focus-title">Idle</h2>
+                <div id="focus-content">Awaiting initialization.</div>
+            </div>
+            <div class="trace-log">
+                <h3>Execution Trace</h3>
+                <div id="console-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW TOOLS PAGE VIEW -->
+    <div class="container tools-container" id="view-tools" style="display: none;">
+        <div class="tools-content">
+            <div class="tools-header">
+                <h2>Tool System</h2>
+                <p>Every built-in tool Claude Code can call, sorted by what it does.</p>
+            </div>
+            
+            <div class="tool-grid">
+                <!-- FILE OPERATIONS -->
+                <div class="tool-column">
+                    <div class="col-header">FILE OPERATIONS <span class="badge">6 tools</span></div>
+                    <div class="tool-card">FileRead</div>
+                    <div class="tool-card">FileEdit</div>
+                    <div class="tool-card">FileWrite</div>
+                    <div class="tool-card">Glob</div>
+                    <div class="tool-card">Grep</div>
+                    <div class="tool-card">NotebookEdit</div>
+                </div>
+
+                <!-- EXECUTION -->
+                <div class="tool-column">
+                    <div class="col-header">EXECUTION <span class="badge">3 tools</span></div>
+                    <div class="tool-card">Bash</div>
+                    <div class="tool-card">PowerShell</div>
+                    <div class="tool-card">REPL</div>
+                </div>
+
+                <!-- SEARCH & FETCH -->
+                <div class="tool-column">
+                    <div class="col-header">SEARCH & FETCH <span class="badge">4 tools</span></div>
+                    <div class="tool-card auth-gated">WebBrowser</div>
+                    <div class="tool-card">WebFetch</div>
+                    <div class="tool-card">WebSearch</div>
+                    <div class="tool-card">ToolSearch</div>
+                </div>
+
+                <!-- AGENTS & TASKS -->
+                <div class="tool-column">
+                    <div class="col-header">AGENTS & TASKS <span class="badge">11 tools</span></div>
+                    <div class="tool-card">Agent</div>
+                    <div class="tool-card">SendMessage</div>
+                    <div class="tool-card">TaskCreate</div>
+                    <div class="tool-card">TaskGet</div>
+                    <div class="tool-card">TaskList</div>
+                    <div class="tool-card">TaskUpdate</div>
+                    <div class="tool-card">TaskStop</div>
+                    <div class="tool-card">TaskOutput</div>
+                    <div class="tool-card">TeamCreate</div>
+                    <div class="tool-card">TeamDelete</div>
+                    <div class="tool-card auth-gated">ListPeers</div>
+                </div>
+
+                <!-- PLANNING -->
+                <div class="tool-column">
+                    <div class="col-header">PLANNING <span class="badge">5 tools</span></div>
+                    <div class="tool-card">EnterPlanMode</div>
+                    <div class="tool-card">ExitPlanMode</div>
+                    <div class="tool-card">EnterWorktree</div>
+                    <div class="tool-card">ExitWorktree</div>
+                    <div class="tool-card auth-gated">VerifyPlanEx...</div>
+                </div>
+
+                <!-- MCP -->
+                <div class="tool-column">
+                    <div class="col-header">MCP <span class="badge">4 tools</span></div>
+                    <div class="tool-card">mcp</div>
+                    <div class="tool-card">ListMcpResources</div>
+                    <div class="tool-card">ReadMcpResource</div>
+                    <div class="tool-card">McpAuth</div>
+                </div>
+
+                <!-- SYSTEM -->
+                <div class="tool-column">
+                    <div class="col-header">SYSTEM <span class="badge">11 tools</span></div>
+                    <div class="tool-card">AskUserQuestion</div>
+                    <div class="tool-card">TodoWrite</div>
+                    <div class="tool-card">Skill</div>
+                    <div class="tool-card">Config</div>
+                    <div class="tool-card auth-gated">RemoteTrigger</div>
+                    <div class="tool-card auth-gated">CronCreate</div>
+                    <div class="tool-card auth-gated">CronDelete</div>
+                    <div class="tool-card auth-gated">CronList</div>
+                    <div class="tool-card auth-gated">Snip</div>
+                    <div class="tool-card auth-gated">Workflow</div>
+                    <div class="tool-card auth-gated">TerminalCapt...</div>
+                </div>
+
+                <!-- EXPERIMENTAL -->
+                <div class="tool-column">
+                    <div class="col-header">EXPERIMENTAL <span class="badge">8 tools</span></div>
+                    <div class="tool-card">Sleep</div>
+                    <div class="tool-card">SendUserMessage</div>
+                    <div class="tool-card auth-gated">StructuredOu...</div>
+                    <div class="tool-card auth-gated">LSP</div>
+                    <div class="tool-card auth-gated">SendUserFile</div>
+                    <div class="tool-card auth-gated">PushNotifica...</div>
+                    <div class="tool-card auth-gated">Monitor</div>
+                    <div class="tool-card auth-gated">SubscribePR</div>
+                </div>
+            </div>
+
+            <div class="commands-section">
+                <!-- SETUP & CONFIG -->
+                <div class="cmd-category">
+                    <div class="col-header">SETUP & CONFIG <span class="badge">12</span></div>
+                    <div class="cmd-row">
+                        <div class="cmd-pill">/init</div>
+                        <div class="cmd-pill">/login</div>
+                        <div class="cmd-pill">/logout</div>
+                        <div class="cmd-pill">/config</div>
+                        <div class="cmd-pill">/permissions</div>
+                        <div class="cmd-pill">/model</div>
+                        <div class="cmd-pill">/theme</div>
+                        <div class="cmd-pill">/terminal-setup</div>
+                        <div class="cmd-pill">/doctor</div>
+                        <div class="cmd-pill">/onboarding</div>
+                        <div class="cmd-pill">/mcp</div>
+                        <div class="cmd-pill">/hooks</div>
+                    </div>
+                </div>
+
+                <!-- DAILY WORKFLOW -->
+                <div class="cmd-category">
+                    <div class="col-header">DAILY WORKFLOW <span class="badge">24</span></div>
+                    <div class="cmd-row">
+                        <div class="cmd-pill">/compact</div>
+                        <div class="cmd-pill">/memory</div>
+                        <div class="cmd-pill">/context</div>
+                        <div class="cmd-pill">/plan</div>
+                        <div class="cmd-pill">/resume</div>
+                        <div class="cmd-pill">/session</div>
+                        <div class="cmd-pill">/files</div>
+                        <div class="cmd-pill">/add-dir</div>
+                        <div class="cmd-pill">/copy</div>
+                        <div class="cmd-pill">/export</div>
+                        <div class="cmd-pill">/summary</div>
+                        <div class="cmd-pill">/clear</div>
+                        <div class="cmd-pill">/brief</div>
+                        <div class="cmd-pill auth-gated">/output-style</div>
+                        <div class="cmd-pill">/color</div>
+                        <div class="cmd-pill">/vim</div>
+                        <div class="cmd-pill">/keybindings</div>
+                        <div class="cmd-pill">/skills</div>
+                        <div class="cmd-pill">/tasks</div>
+                        <div class="cmd-pill">/agents</div>
+                        <div class="cmd-pill">/fast</div>
+                        <div class="cmd-pill">/effort</div>
+                        <div class="cmd-pill">/extra-usage</div>
+                        <div class="cmd-pill">/rate-limit-options</div>
+                    </div>
+                </div>
+
+                <!-- CODE REVIEW & GIT -->
+                <div class="cmd-category">
+                    <div class="col-header">CODE REVIEW & GIT <span class="badge">13</span></div>
+                    <div class="cmd-row">
+                        <div class="cmd-pill">/review</div>
+                        <div class="cmd-pill">/commit</div>
+                        <div class="cmd-pill">/commit-push-pr</div>
+                        <div class="cmd-pill">/diff</div>
+                        <div class="cmd-pill">/pr_comments</div>
+                        <div class="cmd-pill">/branch</div>
+                        <div class="cmd-pill">/issue</div>
+                        <div class="cmd-pill">/security-review</div>
+                        <div class="cmd-pill auth-gated">/autofix-pr</div>
+                        <div class="cmd-pill">/share</div>
+                        <div class="cmd-pill auth-gated">/install-github-app</div>
+                        <div class="cmd-pill auth-gated">/install-slack-app</div>
+                        <div class="cmd-pill">/tag</div>
+                    </div>
+                </div>
+
+                <!-- DEBUGGING & DIAGNOSTICS -->
+                <div class="cmd-category">
+                    <div class="col-header">DEBUGGING & DIAGNOSTICS <span class="badge">23</span></div>
+                    <div class="cmd-row">
+                        <div class="cmd-pill">/status</div>
+                        <div class="cmd-pill">/stats</div>
+                        <div class="cmd-pill">/cost</div>
+                        <div class="cmd-pill">/usage</div>
+                        <div class="cmd-pill">/version</div>
+                        <div class="cmd-pill">/feedback</div>
+                        <div class="cmd-pill">/think-back</div>
+                        <div class="cmd-pill">/thinkback-play</div>
+                        <div class="cmd-pill">/rewind</div>
+                        <div class="cmd-pill">/ctx_viz</div>
+                        <div class="cmd-pill">/debug-tool-call</div>
+                        <div class="cmd-pill">/perf-issue</div>
+                        <div class="cmd-pill">/heapdump</div>
+                        <div class="cmd-pill">/ant-trace</div>
+                        <div class="cmd-pill auth-gated">/backfill-sessions</div>
+                        <div class="cmd-pill auth-gated">/break-cache</div>
+                        <div class="cmd-pill auth-gated">/bridge-kick</div>
+                        <div class="cmd-pill auth-gated">/mock-limits</div>
+                        <div class="cmd-pill auth-gated">/oauth-refresh</div>
+                        <div class="cmd-pill auth-gated">/reset-limits</div>
+                        <div class="cmd-pill">/env</div>
+                        <div class="cmd-pill auth-gated">/bughunter</div>
+                        <div class="cmd-pill auth-gated">/passes</div>
+                    </div>
+                </div>
+
+                <!-- ADVANCED & EXPERIMENTAL -->
+                <div class="cmd-category">
+                    <div class="col-header">ADVANCED & EXPERIMENTAL <span class="badge">23</span></div>
+                    <div class="cmd-row">
+                        <div class="cmd-pill">/advisor</div>
+                        <div class="cmd-pill auth-gated">/ultraplan</div>
+                        <div class="cmd-pill auth-gated">/remote-control</div>
+                        <div class="cmd-pill">/teleport</div>
+                        <div class="cmd-pill auth-gated">/voice</div>
+                        <div class="cmd-pill auth-gated">/desktop</div>
+                        <div class="cmd-pill auth-gated">/chrome</div>
+                        <div class="cmd-pill auth-gated">/mobile</div>
+                        <div class="cmd-pill">/sandbox</div>
+                        <div class="cmd-pill">/plugin</div>
+                        <div class="cmd-pill">/reload-plugins</div>
+                        <div class="cmd-pill">/web-setup</div>
+                        <div class="cmd-pill">/remote-env</div>
+                        <div class="cmd-pill">/ide</div>
+                        <div class="cmd-pill">/stickers</div>
+                        <div class="cmd-pill">/good-claude</div>
+                        <div class="cmd-pill">/btw</div>
+                        <div class="cmd-pill">/upgrade</div>
+                        <div class="cmd-pill">/release-notes</div>
+                        <div class="cmd-pill">/privacy-settings</div>
+                        <div class="cmd-pill">/help</div>
+                        <div class="cmd-pill">/exit</div>
+                        <div class="cmd-pill">/rename</div>
+                    </div>
+                </div>
+                
+                <div class="footer-note">Click a command to see details and source code</div>
+            </div>
+        </div>
+    </div>
+    <!-- Generic Info Modal -->
+    <div id="info-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h3 id="modal-title">Title</h3>
+            <p id="modal-text">Text</p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
