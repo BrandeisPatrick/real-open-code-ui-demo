@@ -100,17 +100,24 @@ btnMain.onclick = () => {
         // Initialize
         turn = 1;
         currentStep = 1;
-        totalTokens = 3500;
+        totalTokens = 120; // Just the user message initially
         btnMain.textContent = "ADVANCE";
         log("INIT: User prompt received.", true);
     } else if (currentStep < 13) {
         currentStep++;
+        // Update tokens based on step
+        switch(currentStep) {
+            case 2: totalTokens += 7200; break; // Base Prompt + CLAUDE.md + Tool Definitions
+            case 4: totalTokens += 2400; break; // Background Memory Search (relevant snippets)
+            case 8: totalTokens += 1100; break; // Model reasoning + Streaming response
+            case 12: totalTokens += 600; break;  // Final injection of async prefetch hits
+        }
         log(`STEP ${currentStep}: ${steps[currentStep-1].name}`, true);
     } else {
         if (turn < 2) {
             turn++;
             currentStep = 4;
-            totalTokens += 1250;
+            totalTokens += 1850; // Context from tool results being fed back
             log(`LOOP: Returning to Step 4. Turn ${turn}.`, true);
         } else {
             log("HALT: Goal achieved. Yielding control.", true);
