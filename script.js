@@ -82,7 +82,7 @@ function renderStepData(stepId) {
         // Highlight square brackets (tokens) in grey, but ignore our specific span text
         formattedLine = formattedLine.replace(/\[(.*?)\]/g, (match, p1) => {
             if (['SYS_PROMPT', 'UNICODE_SANI', 'SAFETY_CHECK', 'AST_PARSER', 'WARNINGS'].includes(p1)) return match;
-            return `<span style="color: #666;">[${p1}]</span>`;
+            return `<span style="color: #888;">[${p1}]</span>`;
         });
 
         if (line.startsWith('$')) {
