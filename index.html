@@ -44,100 +44,256 @@
         <div class="tools-content">
             <div class="tools-header">
                 <h2>Tool System</h2>
-                <p>Every built-in tool Claude Code can call, sorted by what it does.</p>
+                <p>Every built-in tool Claude Code can call, sorted by what it does. <span class="tools-legend"><span class="lock-icon-sample"></span> indicates tool is auth-gated</span></p>
             </div>
             
             <div class="tool-grid">
                 <!-- FILE OPERATIONS -->
                 <div class="tool-column">
                     <div class="col-header">FILE OPERATIONS <span class="badge">6 tools</span></div>
-                    <div class="tool-card">FileRead</div>
-                    <div class="tool-card">FileEdit</div>
-                    <div class="tool-card">FileWrite</div>
-                    <div class="tool-card">Glob</div>
-                    <div class="tool-card">Grep</div>
-                    <div class="tool-card">NotebookEdit</div>
+                    <div class="tool-card">
+                        <div class="tool-name">FileRead</div>
+                        <div class="tool-desc">Read a file from the local filesystem.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">FileEdit</div>
+                        <div class="tool-desc">Performs exact string replacements in files.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">FileWrite</div>
+                        <div class="tool-desc">Write a file to the local filesystem.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">Glob</div>
+                        <div class="tool-desc">Fast file pattern matching tool.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">Grep</div>
+                        <div class="tool-desc">A powerful search tool built on ripgrep.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">NotebookEdit</div>
+                        <div class="tool-desc">Edit Jupyter notebooks.</div>
+                    </div>
                 </div>
 
                 <!-- EXECUTION -->
                 <div class="tool-column">
                     <div class="col-header">EXECUTION <span class="badge">3 tools</span></div>
-                    <div class="tool-card">Bash</div>
-                    <div class="tool-card">PowerShell</div>
-                    <div class="tool-card">REPL</div>
+                    <div class="tool-card">
+                        <div class="tool-name">Bash</div>
+                        <div class="tool-desc">Run shell command.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">PowerShell</div>
+                        <div class="tool-desc">Run PowerShell command.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">REPL</div>
+                        <div class="tool-desc">Interactive REPL loop for evaluating code.</div>
+                    </div>
                 </div>
 
                 <!-- SEARCH & FETCH -->
                 <div class="tool-column">
                     <div class="col-header">SEARCH & FETCH <span class="badge">4 tools</span></div>
-                    <div class="tool-card auth-gated">WebBrowser</div>
-                    <div class="tool-card">WebFetch</div>
-                    <div class="tool-card">WebSearch</div>
-                    <div class="tool-card">ToolSearch</div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">WebBrowser</div>
+                        <div class="tool-desc">Control a web browser to navigate and interact with web pages.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">WebFetch</div>
+                        <div class="tool-desc">Fetch contents of a URL.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">WebSearch</div>
+                        <div class="tool-desc">Search the web using Google Search API.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">ToolSearch</div>
+                        <div class="tool-desc">Search for available tools.</div>
+                    </div>
                 </div>
 
                 <!-- AGENTS & TASKS -->
                 <div class="tool-column">
                     <div class="col-header">AGENTS & TASKS <span class="badge">11 tools</span></div>
-                    <div class="tool-card">Agent</div>
-                    <div class="tool-card">SendMessage</div>
-                    <div class="tool-card">TaskCreate</div>
-                    <div class="tool-card">TaskGet</div>
-                    <div class="tool-card">TaskList</div>
-                    <div class="tool-card">TaskUpdate</div>
-                    <div class="tool-card">TaskStop</div>
-                    <div class="tool-card">TaskOutput</div>
-                    <div class="tool-card">TeamCreate</div>
-                    <div class="tool-card">TeamDelete</div>
-                    <div class="tool-card auth-gated">ListPeers</div>
+                    <div class="tool-card">
+                        <div class="tool-name">Agent</div>
+                        <div class="tool-desc">Spawn an autonomous sub-agent.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">SendMessage</div>
+                        <div class="tool-desc">Send a message to another agent.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskCreate</div>
+                        <div class="tool-desc">Create a new task in the task list.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskGet</div>
+                        <div class="tool-desc">Get a task by ID from the task list.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskList</div>
+                        <div class="tool-desc">List all tasks in the task list.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskUpdate</div>
+                        <div class="tool-desc">Update a task in the task list.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskStop</div>
+                        <div class="tool-desc">Stop a running task.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TaskOutput</div>
+                        <div class="tool-desc">Get the output of a completed task.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TeamCreate</div>
+                        <div class="tool-desc">Create a team of agents.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TeamDelete</div>
+                        <div class="tool-desc">Delete a team of agents.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">ListPeers</div>
+                        <div class="tool-desc">List peers in the current team.</div>
+                    </div>
                 </div>
 
                 <!-- PLANNING -->
                 <div class="tool-column">
                     <div class="col-header">PLANNING <span class="badge">5 tools</span></div>
-                    <div class="tool-card">EnterPlanMode</div>
-                    <div class="tool-card">ExitPlanMode</div>
-                    <div class="tool-card">EnterWorktree</div>
-                    <div class="tool-card">ExitWorktree</div>
-                    <div class="tool-card auth-gated">VerifyPlanEx...</div>
+                    <div class="tool-card">
+                        <div class="tool-name">EnterPlanMode</div>
+                        <div class="tool-desc">Enter planning mode.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">ExitPlanMode</div>
+                        <div class="tool-desc">Exit planning mode.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">EnterWorktree</div>
+                        <div class="tool-desc">Enter a git worktree.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">ExitWorktree</div>
+                        <div class="tool-desc">Exit a git worktree.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">VerifyPlanEx...</div>
+                        <div class="tool-desc">Verify plan execution.</div>
+                    </div>
                 </div>
 
                 <!-- MCP -->
                 <div class="tool-column">
                     <div class="col-header">MCP <span class="badge">4 tools</span></div>
-                    <div class="tool-card">mcp</div>
-                    <div class="tool-card">ListMcpResources</div>
-                    <div class="tool-card">ReadMcpResource</div>
-                    <div class="tool-card">McpAuth</div>
+                    <div class="tool-card">
+                        <div class="tool-name">mcp</div>
+                        <div class="tool-desc">Interact with Model Context Protocol servers.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">ListMcpResources</div>
+                        <div class="tool-desc">List available MCP resources.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">ReadMcpResource</div>
+                        <div class="tool-desc">Read an MCP resource.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">McpAuth</div>
+                        <div class="tool-desc">Authenticate with an MCP server.</div>
+                    </div>
                 </div>
 
                 <!-- SYSTEM -->
                 <div class="tool-column">
                     <div class="col-header">SYSTEM <span class="badge">11 tools</span></div>
-                    <div class="tool-card">AskUserQuestion</div>
-                    <div class="tool-card">TodoWrite</div>
-                    <div class="tool-card">Skill</div>
-                    <div class="tool-card">Config</div>
-                    <div class="tool-card auth-gated">RemoteTrigger</div>
-                    <div class="tool-card auth-gated">CronCreate</div>
-                    <div class="tool-card auth-gated">CronDelete</div>
-                    <div class="tool-card auth-gated">CronList</div>
-                    <div class="tool-card auth-gated">Snip</div>
-                    <div class="tool-card auth-gated">Workflow</div>
-                    <div class="tool-card auth-gated">TerminalCapt...</div>
+                    <div class="tool-card">
+                        <div class="tool-name">AskUserQuestion</div>
+                        <div class="tool-desc">Ask the user a question.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">TodoWrite</div>
+                        <div class="tool-desc">Write to the user's todo list.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">Skill</div>
+                        <div class="tool-desc">Manage or execute skills.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">Config</div>
+                        <div class="tool-desc">Get or set Claude Code configuration settings.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">RemoteTrigger</div>
+                        <div class="tool-desc">Trigger a remote workflow.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">CronCreate</div>
+                        <div class="tool-desc">Schedule a cron job.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">CronDelete</div>
+                        <div class="tool-desc">Cancel a scheduled cron job by ID.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">CronList</div>
+                        <div class="tool-desc">List scheduled cron jobs.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">Snip</div>
+                        <div class="tool-desc">Manage code snippets.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">Workflow</div>
+                        <div class="tool-desc">Execute a workflow.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">TerminalCapt...</div>
+                        <div class="tool-desc">Capture terminal output.</div>
+                    </div>
                 </div>
 
                 <!-- EXPERIMENTAL -->
                 <div class="tool-column">
                     <div class="col-header">EXPERIMENTAL <span class="badge">8 tools</span></div>
-                    <div class="tool-card">Sleep</div>
-                    <div class="tool-card">SendUserMessage</div>
-                    <div class="tool-card auth-gated">StructuredOu...</div>
-                    <div class="tool-card auth-gated">LSP</div>
-                    <div class="tool-card auth-gated">SendUserFile</div>
-                    <div class="tool-card auth-gated">PushNotifica...</div>
-                    <div class="tool-card auth-gated">Monitor</div>
-                    <div class="tool-card auth-gated">SubscribePR</div>
+                    <div class="tool-card">
+                        <div class="tool-name">Sleep</div>
+                        <div class="tool-desc">Wait for a specified duration.</div>
+                    </div>
+                    <div class="tool-card">
+                        <div class="tool-name">SendUserMessage</div>
+                        <div class="tool-desc">Send a message to the user.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">StructuredOu...</div>
+                        <div class="tool-desc">Return structured JSON output.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">LSP</div>
+                        <div class="tool-desc">Interact with Language Server Protocol (LSP) servers.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">SendUserFile</div>
+                        <div class="tool-desc">Send a file to the user.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">PushNotifica...</div>
+                        <div class="tool-desc">Send a push notification.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">Monitor</div>
+                        <div class="tool-desc">Monitor system resources.</div>
+                    </div>
+                    <div class="tool-card auth-gated">
+                        <div class="tool-name">SubscribePR</div>
+                        <div class="tool-desc">Subscribe to Pull Request events.</div>
+                    </div>
                 </div>
             </div>
 
