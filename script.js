@@ -1,17 +1,17 @@
 const steps = [
-    { id: 1, name: "Process Input" },
-    { id: 2, name: "Assemble Context" },
-    { id: 3, name: "Record Transcript" },
-    { id: 4, name: "Prefetch Background" },
-    { id: 5, name: "Budget Tools" },
-    { id: 6, name: "Compact Context" },
-    { id: 7, name: "Check Limits" },
-    { id: 8, name: "Query Model" },
-    { id: 9, name: "Recover Errors" },
-    { id: 10, name: "Post-Sample Hooks" },
-    { id: 11, name: "Orchestrate Tools" },
-    { id: 12, name: "Inject Context" },
-    { id: 13, name: "Evaluate Loop" }
+    { id: 1, name: "Process Input", description: "Intercepts the user's raw input, checks for slash commands, and applies security sanitization." },
+    { id: 2, name: "Assemble Context", description: "Compiles the system prompt, project-specific instructions (CLAUDE.md), memory, and tool definitions." },
+    { id: 3, name: "Record Transcript", description: "Persists the session state to disk, enabling features like 'claude --resume' and session history." },
+    { id: 4, name: "Prefetch Background", description: "Launches asynchronous threads to search for relevant memories and skills to reduce latency." },
+    { id: 5, name: "Budget Tools", description: "Manages the token budget by truncating oversized tool outputs from previous turns." },
+    { id: 6, name: "Compact Context", description: "Applies various compression algorithms to the conversation history to stay within token limits." },
+    { id: 7, name: "Check Limits", description: "Performs a final verification that the total context size is within the model's hard limits." },
+    { id: 8, name: "Query Model", description: "Sends the assembled context to the Anthropic API and streams back the model's response." },
+    { id: 9, name: "Recover Errors", description: "Catches API errors like 'prompt too long' mid-flight and triggers reactive compression." },
+    { id: 10, name: "Post-Sample Hooks", description: "Analyzes the model's raw output for safety, structure, and valid tool call formatting." },
+    { id: 11, name: "Orchestrate Tools", description: "Validates permissions and executes the model's requested tools in parallel." },
+    { id: 12, name: "Inject Context", description: "Collects results from the background prefetch threads and appends them to the history for the next turn." },
+    { id: 13, name: "Evaluate Loop", description: "Determines if the task is complete or if further tool use is required to satisfy the user's request." }
 ];
 
 let currentStep = 0;
@@ -24,7 +24,8 @@ const turnDisplay = document.getElementById('turn-count');
 const btnMain = document.getElementById('btn-main');
 const btnReset = document.getElementById('btn-reset');
 const focusTitle = document.getElementById('focus-title');
-const focusContent = document.getElementById('focus-content');
+const terminalContent = document.getElementById('terminal-content');
+const explanationText = document.getElementById('explanation-text');
 
 function log(msg, isActive = false) {
     const div = document.createElement('div');
@@ -44,10 +45,12 @@ function updateUI() {
         
         const step = steps[currentStep - 1];
         focusTitle.textContent = `[STEP ${step.id}] ${step.name}`;
+        explanationText.textContent = step.description;
         renderStepData(currentStep);
     } else {
         focusTitle.textContent = "Idle";
-        focusContent.textContent = "System awaiting initialization.";
+        terminalContent.textContent = "System awaiting initialization.";
+        explanationText.textContent = "Click INITIALIZE to begin the agent loop.";
     }
     
     tokenDisplay.textContent = totalTokens.toLocaleString();
@@ -79,7 +82,7 @@ function renderStepData(stepId) {
         // Highlight square brackets (tokens) in grey, but ignore our specific span text
         formattedLine = formattedLine.replace(/\[(.*?)\]/g, (match, p1) => {
             if (['SYS_PROMPT', 'UNICODE_SANI', 'SAFETY_CHECK', 'AST_PARSER', 'WARNINGS'].includes(p1)) return match;
-            return `<span style="color: #888;">[${p1}]</span>`;
+            return `<span style="color: #666;">[${p1}]</span>`;
         });
 
         if (line.startsWith('$')) {
@@ -90,7 +93,7 @@ function renderStepData(stepId) {
         return `<span class="cli-output">${formattedLine}</span>`;
     }).join('<br>');
     
-    focusContent.innerHTML = formattedContent;
+    terminalContent.innerHTML = formattedContent;
 }
 
 btnMain.onclick = () => {
@@ -245,7 +248,7 @@ const modalTitle = document.getElementById("modal-title");
 const modalText = document.getElementById("modal-text");
 
 // Event delegation for dynamically added link
-document.getElementById("focus-content").addEventListener("click", function(e) {
+document.getElementById("terminal-content").addEventListener("click", function(e) {
     if (e.target && e.target.classList.contains("info-link")) {
         const type = e.target.getAttribute("data-type");
         if (modalData[type]) {
